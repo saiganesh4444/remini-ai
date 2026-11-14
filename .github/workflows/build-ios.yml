@@ -13,29 +13,36 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Build App for iOS Device
+      - name: Compile Remini AI for iPhone
         run: |
-          cd ReminiAI
-          xcodebuild build \
-            -project ReminiAI.xcodeproj \
-            -scheme ReminiAI \
-            -configuration Release \
-            -sdk iphoneos \
-            -destination "generic/platform=iOS" \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO
+          set -e
+          echo "Finding Swift files..."
+          SWIFT_FILES=$(find ReminiAI -name "*.swift" -not -path "*/build/*")
+          echo "Compiling Swift files: $SWIFT_FILES"
+          
+          xcrun -sdk iphoneos swiftc \
+            -target arm64-apple-ios16.0 \
+            -O \
+            -framework SwiftUI \
+            -framework UIKit \
+            -framework CoreImage \
+            -framework Vision \
+            -framework Photos \
+            -framework PhotosUI \
+            -o ReminiAI_bin \
+            $SWIFT_FILES
 
-      - name: Package Payload to .IPA
-        run: |
-          cd ReminiAI
-          mkdir -p build/Payload
-          cp -r build/Build/Products/Release-iphoneos/ReminiAI.app build/Payload/
-          cd build
+          echo "Packaging into IPA..."
+          mkdir -p Payload/ReminiAI.app
+          cp ReminiAI_bin Payload/ReminiAI.app/ReminiAI
+          INFO_PLIST=$(find ReminiAI -name "Info.plist" | head -n 1)
+          cp "$INFO_PLIST" Payload/ReminiAI.app/Info.plist
+          
           zip -r ReminiAI.ipa Payload
-          cd ../..
+          echo "IPA packaging complete!"
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ReminiAI-iPhone13-IPA
-          path: ReminiAI/build/ReminiAI.ipa
+          path: ReminiAI.ipa
