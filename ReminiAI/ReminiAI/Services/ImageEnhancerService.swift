@@ -357,10 +357,8 @@ final class ImageEnhancerService {
             return processed
         }
         
-        // Alpha constant generator
-        let alpha = CIFilter.constantColorGenerator()
-        alpha.color = CIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: CGFloat(clamped))
-        let mask = alpha.outputImage?.cropped(to: ciProc.extent) ?? ciProc
+        // Alpha constant generator via CIImage solid color
+        let mask = CIImage(color: CIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: CGFloat(clamped))).cropped(to: ciProc.extent)
         
         let blend = CIFilter.blendWithMask()
         blend.inputImage = ciProc
