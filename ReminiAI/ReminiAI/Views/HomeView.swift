@@ -1,43 +1,34 @@
 import SwiftUI
 import PhotosUI
 
+/// ReminiAI Home Screen
+/// Light theme with Inter typography, 8px spacing scale, and 390 × 844 reference layout
 struct HomeView: View {
     @EnvironmentObject var viewModel: EnhanceViewModel
+    @FocusState private var isSearchFocused: Bool
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color(red: 0.07, green: 0.07, blue: 0.08)
-                    .ignoresSafeArea()
+        NavigationStack {
+            ZStack(alignment: .bottom) {
+                // Background
+                ReminiDesign.background.ignoresSafeArea()
                 
+                // Scrollable Content
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: ReminiDesign.space24) {
                         
-                        // MARK: - Top Header
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack(spacing: 8) {
-                                    Text("Remini")
-                                        .font(.system(size: 28, weight: .black, design: .rounded))
-                                        .foregroundColor(.white)
-                                    
-                                    Text("AI")
-                                        .font(.system(size: 13, weight: .black, design: .monospaced))
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 3)
-                                        .background(LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing))
-                                        .foregroundColor(.white)
-                                        .clipShape(Capsule())
-                                }
+                        // MARK: - Header: Aperture Logo + Wordmark + Profile Button
+                        HStack(spacing: ReminiDesign.space12) {
+                            ApertureLogo(size: 30, color: ReminiDesign.primary)
+                            
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("ReminiAI")
+                                    .font(.reminiTitle)
+                                    .foregroundColor(ReminiDesign.text)
                                 
-                                HStack(spacing: 5) {
-                                    Circle()
-                                        .fill(Color.green)
-                                        .frame(width: 7, height: 7)
-                                    Text("iPhone 13 A15 Neural Engine")
-                                        .font(.system(size: 11, weight: .medium))
-                                        .foregroundColor(.gray)
-                                }
+                                Text("Natural portrait & photo clarity")
+                                    .font(.reminiCaption)
+                                    .foregroundColor(ReminiDesign.secondaryText)
                             }
                             
                             Spacer()
@@ -45,207 +36,196 @@ struct HomeView: View {
                             Button(action: {
                                 viewModel.showSettingsView = true
                             }) {
-                                Image(systemName: "gearshape.fill")
-                                    .font(.system(size: 18))
-                                    .foregroundColor(.white.opacity(0.8))
-                                    .padding(10)
-                                    .background(Circle().fill(Color.white.opacity(0.08)))
+                                Image(systemName: "person.crop.circle")
+                                    .font(.system(size: 24, weight: .regular))
+                                    .foregroundColor(ReminiDesign.primary)
+                                    .frame(width: ReminiDesign.minTouchTarget, height: ReminiDesign.minTouchTarget)
+                                    .background(ReminiDesign.secondarySurface)
+                                    .clipShape(Circle())
                             }
+                            .accessibilityLabel("Profile and Settings")
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.top, 12)
+                        .padding(.horizontal, ReminiDesign.space16)
+                        .padding(.top, ReminiDesign.space8)
                         
-                        // MARK: - Hero Upload Card
-                        VStack(spacing: 18) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 24)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.blue.opacity(0.35),
-                                                Color.purple.opacity(0.2),
-                                                Color.black.opacity(0.6)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 24)
-                                            .stroke(
-                                                LinearGradient(
-                                                    colors: [Color.blue.opacity(0.5), Color.clear],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                ),
-                                                lineWidth: 1.5
-                                            )
-                                    )
-                                
-                                VStack(spacing: 16) {
-                                    Image(systemName: "wand.and.stars")
-                                        .font(.system(size: 38, weight: .semibold))
-                                        .foregroundStyle(
-                                            LinearGradient(
-                                                colors: [.cyan, .blue, .purple],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
-                                        .padding(.top, 8)
-                                    
-                                    VStack(spacing: 4) {
-                                        Text("Enhance Any Photo")
-                                            .font(.system(size: 20, weight: .bold))
-                                            .foregroundColor(.white)
-                                        
-                                        Text("Turn low-res, blurry, or old photos into crystal-clear HD portraits")
-                                            .font(.system(size: 13))
-                                            .foregroundColor(.gray)
-                                            .multilineTextAlignment(.center)
-                                            .padding(.horizontal, 24)
-                                    }
-                                    
-                                    // Action Buttons: Choose Photo or Take Photo
-                                    HStack(spacing: 12) {
-                                        PhotosPicker(
-                                            selection: $viewModel.photoPickerItem,
-                                            matching: .images,
-                                            photoLibrary: .shared()
-                                        ) {
-                                            HStack(spacing: 8) {
-                                                Image(systemName: "photo.on.rectangle.angled")
-                                                    .font(.system(size: 15, weight: .bold))
-                                                Text("Choose Photo")
-                                                    .font(.system(size: 15, weight: .bold))
-                                            }
-                                            .frame(maxWidth: .infinity)
-                                            .frame(height: 48)
-                                            .background(
-                                                LinearGradient(
-                                                    colors: [Color.blue, Color.cyan],
-                                                    startPoint: .leading,
-                                                    endPoint: .trailing
-                                                )
-                                            )
-                                            .foregroundColor(.white)
-                                            .clipShape(RoundedRectangle(cornerRadius: 14))
-                                        }
-                                        
-                                        Button(action: {
-                                            viewModel.showCameraPicker = true
-                                        }) {
-                                            Image(systemName: "camera.fill")
-                                                .font(.system(size: 16, weight: .bold))
-                                                .frame(width: 48, height: 48)
-                                                .background(Color.white.opacity(0.12))
-                                                .foregroundColor(.white)
-                                                .clipShape(RoundedRectangle(cornerRadius: 14))
-                                        }
-                                    }
-                                    .padding(.horizontal, 20)
-                                    .padding(.bottom, 12)
-                                }
-                                .padding(.vertical, 16)
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        
-                        // MARK: - Enhancement Modes Section
-                        VStack(alignment: .leading, spacing: 14) {
-                            Text("ENHANCEMENT MODES")
-                                .font(.system(size: 12, weight: .black, design: .monospaced))
-                                .tracking(1.5)
-                                .foregroundColor(.gray.opacity(0.8))
-                                .padding(.horizontal, 20)
+                        // MARK: - Search Tools Field
+                        HStack(spacing: 10) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 15))
+                                .foregroundColor(ReminiDesign.secondaryText)
                             
-                            VStack(spacing: 12) {
-                                ForEach(EnhancementMode.allCases) { mode in
-                                    ToolCard(
-                                        mode: mode,
-                                        isSelected: viewModel.selectedMode == mode
-                                    ) {
-                                        viewModel.selectedMode = mode
-                                    }
+                            TextField("Search tools...", text: $viewModel.searchQuery)
+                                .font(.reminiBody)
+                                .foregroundColor(ReminiDesign.text)
+                                .focused($isSearchFocused)
+                                .autocorrectionDisabled(true)
+                            
+                            if !viewModel.searchQuery.isEmpty {
+                                Button(action: {
+                                    viewModel.searchQuery = ""
+                                }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(ReminiDesign.secondaryText)
                                 }
+                                .accessibilityLabel("Clear search")
                             }
-                            .padding(.horizontal, 20)
+                        }
+                        .padding(.horizontal, ReminiDesign.space12)
+                        .frame(height: 46)
+                        .background(ReminiDesign.cardBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: ReminiDesign.corner16))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: ReminiDesign.corner16)
+                                .stroke(isSearchFocused ? ReminiDesign.primary : ReminiDesign.borderSubtle, lineWidth: 1)
+                        )
+                        .padding(.horizontal, ReminiDesign.space16)
+                        
+                        // Search Results or Standard Layout
+                        if !viewModel.searchQuery.isEmpty {
+                            searchResultsSection
+                        } else {
+                            standardContentSection
                         }
                         
-                        Spacer().frame(height: 20)
+                        // Bottom buffer to prevent overlap with sticky CTA
+                        Spacer().frame(height: 100)
                     }
                 }
+                
+                // MARK: - Sticky Bottom CTA (Bottom 40% of screen)
+                VStack(spacing: 8) {
+                    PhotosPicker(
+                        selection: $viewModel.photoPickerItem,
+                        matching: .images,
+                        photoLibrary: .shared()
+                    ) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .font(.system(size: 16, weight: .semibold))
+                            Text("Choose photo")
+                                .font(.reminiButton)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(ReminiDesign.primary)
+                        .foregroundColor(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: ReminiDesign.corner16))
+                        .shadow(color: ReminiDesign.primary.opacity(0.18), radius: 8, x: 0, y: 3)
+                    }
+                    .accessibilityLabel("Choose photo from library using \(viewModel.selectedMode.rawValue)")
+                    
+                    Text("Using \(viewModel.selectedMode.rawValue) • \(viewModel.selectedEngine == .onDevice ? "On-Device Neural Engine" : "Cloud AI")")
+                        .font(.system(size: 11, weight: .regular))
+                        .foregroundColor(ReminiDesign.secondaryText)
+                }
+                .padding(.horizontal, ReminiDesign.space16)
+                .padding(.top, 12)
+                .padding(.bottom, ReminiDesign.space8)
+                .background(
+                    ReminiDesign.background
+                        .opacity(0.96)
+                        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: -4)
+                )
             }
             .navigationBarHidden(true)
         }
-        // Processing Screen Overlay
-        .fullScreenCover(isPresented: $viewModel.isProcessing) {
-            ProcessingView()
-                .environmentObject(viewModel)
-        }
-        // Before / After Comparison Screen
-        .fullScreenCover(isPresented: $viewModel.showComparisonView) {
-            ComparisonView()
-                .environmentObject(viewModel)
-        }
-        // Settings Sheet
-        .sheet(isPresented: $viewModel.showSettingsView) {
-            SettingsView()
-                .environmentObject(viewModel)
-        }
-        // Camera Picker Sheet
-        .sheet(isPresented: $viewModel.showCameraPicker) {
-            CameraPicker { capturedImage in
-                viewModel.setImageFromCamera(capturedImage)
+    }
+    
+    // MARK: - Standard Layout (Featured Card + 2-Column Grid)
+    private var standardContentSection: some View {
+        VStack(alignment: .leading, spacing: ReminiDesign.space24) {
+            // Featured Card (Natural Enhance by default or selected tool)
+            FeaturedToolCard(mode: viewModel.selectedMode) {
+                viewModel.showImagePicker = true
+            }
+            .padding(.horizontal, ReminiDesign.space16)
+            
+            // 2-Column Grid for Remaining Tools
+            VStack(alignment: .leading, spacing: ReminiDesign.space12) {
+                Text("ALL ENHANCEMENT TOOLS")
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .tracking(1.2)
+                    .foregroundColor(ReminiDesign.secondaryText)
+                    .padding(.horizontal, ReminiDesign.space16)
+                
+                let remainingTools = EnhancementMode.allCases.filter { $0 != viewModel.selectedMode }
+                
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: ReminiDesign.space8),
+                        GridItem(.flexible(), spacing: ReminiDesign.space8)
+                    ],
+                    spacing: ReminiDesign.space8
+                ) {
+                    ForEach(remainingTools) { tool in
+                        ToolCard(
+                            mode: tool,
+                            isSelected: viewModel.selectedMode == tool
+                        ) {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                                viewModel.selectedMode = tool
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, ReminiDesign.space16)
             }
         }
-        // Error Alert
-        .alert("Notice", isPresented: $viewModel.showErrorAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(viewModel.errorMessage ?? "An unexpected error occurred.")
-        }
-    }
-}
-
-// Camera Picker UIViewControllerRepresentable
-struct CameraPicker: UIViewControllerRepresentable {
-    let onImagePicked: (UIImage) -> Void
-    @Environment(\.dismiss) var dismiss
-    
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        if UIImagePickerController.isSourceTypeAvailable(.camera) {
-            picker.sourceType = .camera
-        } else {
-            picker.sourceType = .photoLibrary
-        }
-        picker.delegate = context.coordinator
-        return picker
     }
     
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: CameraPicker
-        
-        init(_ parent: CameraPicker) {
-            self.parent = parent
-        }
-        
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-            if let image = info[.originalImage] as? UIImage {
-                parent.onImagePicked(image)
+    // MARK: - Search Results Section
+    private var searchResultsSection: some View {
+        VStack(alignment: .leading, spacing: ReminiDesign.space12) {
+            if viewModel.filteredTools.isEmpty {
+                VStack(spacing: ReminiDesign.space12) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 36))
+                        .foregroundColor(ReminiDesign.secondaryText.opacity(0.5))
+                        .padding(.top, 30)
+                    
+                    Text("No tools found")
+                        .font(.reminiSection)
+                        .foregroundColor(ReminiDesign.text)
+                    
+                    Text("Try searching for 'Upscale', 'Sharpen', 'Vintage', or 'Blur'.")
+                        .font(.reminiCaption)
+                        .foregroundColor(ReminiDesign.secondaryText)
+                    
+                    Button("Clear Search") {
+                        viewModel.searchQuery = ""
+                    }
+                    .font(.reminiButton)
+                    .foregroundColor(ReminiDesign.primary)
+                    .padding(.top, 4)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 40)
+            } else {
+                Text("MATCHING TOOLS (\(viewModel.filteredTools.count))")
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .tracking(1.2)
+                    .foregroundColor(ReminiDesign.secondaryText)
+                    .padding(.horizontal, ReminiDesign.space16)
+                
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: ReminiDesign.space8),
+                        GridItem(.flexible(), spacing: ReminiDesign.space8)
+                    ],
+                    spacing: ReminiDesign.space8
+                ) {
+                    ForEach(viewModel.filteredTools) { tool in
+                        ToolCard(
+                            mode: tool,
+                            isSelected: viewModel.selectedMode == tool
+                        ) {
+                            viewModel.selectedMode = tool
+                        }
+                    }
+                }
+                .padding(.horizontal, ReminiDesign.space16)
             }
-            parent.dismiss()
-        }
-        
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.dismiss()
         }
     }
 }

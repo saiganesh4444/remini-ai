@@ -1,32 +1,31 @@
 import SwiftUI
 
+/// Accessible, Gesture-Driven Split Before/After Slider
 struct BeforeAfterSlider: View {
     let beforeImage: UIImage
     let afterImage: UIImage
     
-    @State private var sliderPosition: CGFloat = 0.5 // 0.0 (all before) to 1.0 (all after)
+    @State private var sliderPosition: CGFloat = 0.50
     @State private var isDragging: Bool = false
     
-    // Zoom and Pan state
+    // Zoom and Pan
     @State private var scale: CGFloat = 1.0
-    @State private var lastScale: CGFloat = 1.0
     @State private var offset: CGSize = .zero
-    @State private var lastOffset: CGSize = .zero
     
     var body: some View {
         GeometryReader { geometry in
             let width = geometry.size.width
             let height = geometry.size.height
-            let splitX = width * sliderPosition
+            let splitX = max(0, min(width, width * sliderPosition))
             
             ZStack(alignment: .leading) {
-                // Background Layer: Before Image (Original)
+                // Before Image (Original on Right)
                 Image(uiImage: beforeImage)
                     .resizable()
                     .scaledToFit()
                     .frame(width: width, height: height)
                 
-                // Foreground Layer: After Image (Enhanced) masked by split line
+                // After Image (Enhanced on Left)
                 Image(uiImage: afterImage)
                     .resizable()
                     .scaledToFit()
@@ -34,82 +33,74 @@ struct BeforeAfterSlider: View {
                     .mask(
                         HStack(spacing: 0) {
                             Rectangle()
-                                .frame(width: max(0, splitX))
+                                .frame(width: splitX)
                             Spacer(minLength: 0)
                         }
                         .frame(width: width, height: height)
                     )
                 
-                // Vertical Divider Line
+                // Divider Line
                 Rectangle()
                     .fill(Color.white)
                     .frame(width: 2.5)
-                    .shadow(color: .black.opacity(0.4), radius: 3, x: 0, y: 0)
+                    .shadow(color: Color.black.opacity(0.35), radius: 3, x: 0, y: 0)
                     .position(x: splitX, y: height / 2)
                 
-                // Circular Grab Handle in the Center
+                // Grab Handle
                 ZStack {
                     Circle()
                         .fill(Color.white)
-                        .frame(width: 44, height: 44)
-                        .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 2)
+                        .frame(width: 40, height: 40)
+                        .shadow(color: Color.black.opacity(0.25), radius: 5, x: 0, y: 2)
                     
-                    HStack(spacing: 4) {
+                    HStack(spacing: 3) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.black)
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(ReminiDesign.primary)
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.black)
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(ReminiDesign.primary)
                     }
                 }
                 .position(x: splitX, y: height / 2)
                 .scaleEffect(isDragging ? 1.15 : 1.0)
-                .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isDragging)
+                .animation(.spring(response: 0.2, dampingFraction: 0.65), value: isDragging)
                 
-                // Badges: "AFTER" on Left side of divider, "BEFORE" on Right side of divider
+                // Badges
                 VStack {
                     HStack {
-                        // After badge
                         Text("AFTER")
-                            .font(.system(size: 11, weight: .black, design: .rounded))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(.ultraThinMaterial)
+                            .font(.system(size: 10, weight: .black))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.white.opacity(0.92))
+                            .foregroundColor(ReminiDesign.primary)
                             .clipShape(Capsule())
-                            .overlay(Capsule().stroke(Color.white.opacity(0.3), lineWidth: 1))
-                            .foregroundColor(.white)
+                            .shadow(color: Color.black.opacity(0.12), radius: 3)
                             .opacity(sliderPosition > 0.15 ? 1 : 0)
-                            .animation(.easeInOut(duration: 0.2), value: sliderPosition)
                         
                         Spacer()
                         
-                        // Before badge
                         Text("BEFORE")
-                            .font(.system(size: 11, weight: .black, design: .rounded))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(.ultraThinMaterial)
+                            .font(.system(size: 10, weight: .black))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.black.opacity(0.55))
+                            .foregroundColor(.white)
                             .clipShape(Capsule())
-                            .overlay(Capsule().stroke(Color.white.opacity(0.3), lineWidth: 1))
-                            .foregroundColor(.white.opacity(0.8))
                             .opacity(sliderPosition < 0.85 ? 1 : 0)
-                            .animation(.easeInOut(duration: 0.2), value: sliderPosition)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-                    
+                    .padding(ReminiDesign.space12)
                     Spacer()
                 }
             }
             .contentShape(Rectangle())
-            // Gesture handling for the split slider
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
                         isDragging = true
                         let newPos = value.location.x / width
-                        sliderPosition = min(max(newPos, 0.0), 1.0)
+                        sliderPosition = max(0.02, min(0.98, newPos))
                     }
                     .onEnded { _ in
                         isDragging = false
@@ -117,11 +108,23 @@ struct BeforeAfterSlider: View {
             )
             .scaleEffect(scale)
             .offset(offset)
-            // Double tap to reset zoom
             .onTapGesture(count: 2) {
                 withAnimation(.spring()) {
                     scale = 1.0
                     offset = .zero
+                }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Before and after comparison slider")
+            .accessibilityValue("\(Int(sliderPosition * 100)) percent after")
+            .accessibilityAdjustableAction { direction in
+                switch direction {
+                case .increment:
+                    sliderPosition = min(1.0, sliderPosition + 0.1)
+                case .decrement:
+                    sliderPosition = max(0.0, sliderPosition - 0.1)
+                @unknown default:
+                    break
                 }
             }
         }

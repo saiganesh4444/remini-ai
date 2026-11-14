@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// 2-Column Grid Tool Tile
 struct ToolCard: View {
     let mode: EnhancementMode
     let isSelected: Bool
@@ -7,60 +8,70 @@ struct ToolCard: View {
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(
-                            isSelected
-                            ? LinearGradient(colors: [Color.blue, Color.purple], startPoint: .topLeading, endPoint: .bottomTrailing)
-                            : LinearGradient(colors: [Color.white.opacity(0.08), Color.white.opacity(0.04)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                        )
-                        .frame(width: 48, height: 48)
-                    
-                    Image(systemName: mode.iconName)
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(isSelected ? .white : .blue.opacity(0.9))
-                }
-                
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack {
-                        Text(mode.rawValue)
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.white)
+            VStack(alignment: .leading, spacing: ReminiDesign.space8) {
+                // Top row: Icon & Selection indicator
+                HStack {
+                    ZStack {
+                        Circle()
+                            .fill(isSelected ? ReminiDesign.primary : ReminiDesign.secondarySurface)
+                            .frame(width: 38, height: 38)
                         
-                        if let badge = mode.badge {
-                            Text(badge)
-                                .font(.system(size: 9, weight: .black))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(badge == "POPULAR" ? Color.pink : Color.indigo)
-                                .foregroundColor(.white)
-                                .clipShape(Capsule())
-                        }
+                        Image(systemName: mode.iconName)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(isSelected ? .white : ReminiDesign.primary)
                     }
                     
-                    Text(mode.subtitle)
-                        .font(.system(size: 12))
-                        .foregroundColor(.gray)
-                        .lineLimit(1)
+                    Spacer()
+                    
+                    if isSelected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(ReminiDesign.primary)
+                    } else if let badge = mode.badgeText {
+                        Text(badge)
+                            .font(.reminiBadge)
+                            .foregroundColor(ReminiDesign.secondaryText)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(ReminiDesign.background)
+                            .clipShape(Capsule())
+                    }
                 }
                 
-                Spacer()
+                Spacer(minLength: 2)
                 
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "chevron.right")
-                    .foregroundColor(isSelected ? .blue : .gray.opacity(0.5))
-                    .font(.system(size: isSelected ? 18 : 13))
+                // Title
+                Text(mode.rawValue)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(ReminiDesign.text)
+                    .lineLimit(1)
+                
+                // Description
+                Text(mode.shortDescription)
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundColor(ReminiDesign.secondaryText)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(14)
+            .padding(ReminiDesign.space12)
+            .frame(maxWidth: .infinity, minHeight: 124, alignment: .topLeading)
             .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(white: 0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(isSelected ? Color.blue.opacity(0.8) : Color.white.opacity(0.06), lineWidth: isSelected ? 1.5 : 1)
+                RoundedRectangle(cornerRadius: ReminiDesign.corner16)
+                    .fill(isSelected ? ReminiDesign.secondarySurface.opacity(0.4) : ReminiDesign.cardBackground)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: ReminiDesign.corner16)
+                    .stroke(
+                        isSelected ? ReminiDesign.primary : ReminiDesign.borderSubtle,
+                        lineWidth: isSelected ? 1.5 : 1
                     )
             )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(mode.rawValue), \(mode.shortDescription)")
+        .accessibilityAddTraits(isSelected ? [.isSelected, .isButton] : [.isButton])
     }
 }

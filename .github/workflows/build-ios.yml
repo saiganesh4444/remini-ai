@@ -3,6 +3,8 @@ name: Build iOS App
 on:
   push:
     branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -13,12 +15,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Compile Remini AI for iPhone
+      - name: Compile Remini AI for iPhone 13
         run: |
           set -e
-          echo "Finding Swift files..."
-          SWIFT_FILES=$(find ReminiAI/ReminiAI -name "*.swift" -not -path "*/build/*")
-          echo "Compiling Swift files: $SWIFT_FILES"
+          echo "Scanning Swift source files in ReminiAI/ReminiAI..."
+          SWIFT_FILES=$(find ReminiAI/ReminiAI -name "*.swift" -not -name "Package.swift" -not -path "*/build/*")
+          echo "Files to compile:"
+          echo "$SWIFT_FILES"
           
           xcrun -sdk iphoneos swiftc \
             -target arm64-apple-ios16.0 \
@@ -29,17 +32,18 @@ jobs:
             -framework Vision \
             -framework Photos \
             -framework PhotosUI \
+            -framework Security \
             -o ReminiAI_bin \
             $SWIFT_FILES
 
-          echo "Packaging into IPA..."
+          echo "Packaging Payload to ReminiAI.ipa..."
           mkdir -p Payload/ReminiAI.app
           cp ReminiAI_bin Payload/ReminiAI.app/ReminiAI
           INFO_PLIST=$(find ReminiAI -name "Info.plist" | head -n 1)
           cp "$INFO_PLIST" Payload/ReminiAI.app/Info.plist
           
           zip -r ReminiAI.ipa Payload
-          echo "IPA packaging complete!"
+          echo "Unsigned IPA packaged successfully!"
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4

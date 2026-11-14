@@ -1,12 +1,13 @@
 import SwiftUI
 
+/// Before / After Result Screen with Interactive Strength Slider
 struct ComparisonView: View {
     @EnvironmentObject var viewModel: EnhanceViewModel
     @State private var showShareSheet: Bool = false
     
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            ReminiDesign.background.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top Navigation Bar
@@ -16,126 +17,176 @@ struct ComparisonView: View {
                     }) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(10)
-                            .background(Circle().fill(Color.white.opacity(0.12)))
+                            .foregroundColor(ReminiDesign.primary)
+                            .frame(width: ReminiDesign.minTouchTarget, height: ReminiDesign.minTouchTarget)
+                            .background(ReminiDesign.secondarySurface)
+                            .clipShape(Circle())
+                    }
+                    .accessibilityLabel("Back to Home")
+                    
+                    Spacer()
+                    
+                    VStack(spacing: 2) {
+                        Text(viewModel.selectedMode.rawValue)
+                            .font(.reminiSection)
+                            .foregroundColor(ReminiDesign.text)
+                        
+                        Text(viewModel.selectedEngine == .onDevice ? "On-Device Engine" : "Cloud AI")
+                            .font(.reminiCaption)
+                            .foregroundColor(ReminiDesign.secondaryText)
                     }
                     
                     Spacer()
                     
-                    Text("Result")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    if let enhanced = viewModel.enhancedImage {
+                    if let imageToShare = viewModel.displayEnhancedImage {
                         Button(action: {
                             showShareSheet = true
                         }) {
                             Image(systemName: "square.and.arrow.up")
                                 .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(10)
-                                .background(Circle().fill(Color.white.opacity(0.12)))
+                                .foregroundColor(ReminiDesign.primary)
+                                .frame(width: ReminiDesign.minTouchTarget, height: ReminiDesign.minTouchTarget)
+                                .background(ReminiDesign.secondarySurface)
+                                .clipShape(Circle())
                         }
+                        .accessibilityLabel("Share Enhanced Photo")
+                    } else {
+                        Spacer().frame(width: ReminiDesign.minTouchTarget)
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
-                .padding(.bottom, 12)
+                .padding(.horizontal, ReminiDesign.space16)
+                .padding(.top, ReminiDesign.space8)
+                .padding(.bottom, ReminiDesign.space12)
                 
-                // Before / After Interactive Split Slider
-                if let before = viewModel.selectedImage, let after = viewModel.enhancedImage {
+                // Interactive Before / After Slider
+                if let before = comparisonBeforeImage, let after = viewModel.displayEnhancedImage {
                     BeforeAfterSlider(beforeImage: before, afterImage: after)
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                        .padding(.horizontal, 16)
+                        .clipShape(RoundedRectangle(cornerRadius: ReminiDesign.corner24))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: ReminiDesign.corner24)
+                                .stroke(ReminiDesign.borderSubtle, lineWidth: 1)
+                        )
+                        .shadow(
+                            color: ReminiDesign.featuredCardShadowColor,
+                            radius: ReminiDesign.featuredCardShadowRadius,
+                            x: 0,
+                            y: ReminiDesign.featuredCardShadowY
+                        )
+                        .padding(.horizontal, ReminiDesign.space16)
                 } else {
                     Spacer()
                     ProgressView()
                     Spacer()
                 }
                 
-                // Bottom Controls & Tool Switcher
-                VStack(spacing: 16) {
-                    // Quick Enhancement Mode Switcher
+                // Bottom Controls & Tuning Panel
+                VStack(spacing: ReminiDesign.space16) {
+                    
+                    // MARK: - Enhancement Strength Slider
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text("Strength")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(ReminiDesign.text)
+                            
+                            Spacer()
+                            
+                            Text("\(Int(viewModel.strength * 100))%")
+                                .font(.reminiBadge)
+                                .foregroundColor(ReminiDesign.primary)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(ReminiDesign.secondarySurface)
+                                .clipShape(Capsule())
+                        }
+                        
+                        Slider(value: $viewModel.strength, in: 0.0...1.0)
+                            .tint(ReminiDesign.primary)
+                            .accessibilityLabel("Enhancement strength slider")
+                            .accessibilityValue("\(Int(viewModel.strength * 100)) percent")
+                        
+                        HStack {
+                            Text("Original (0%)")
+                                .font(.system(size: 11))
+                                .foregroundColor(ReminiDesign.secondaryText)
+                            Spacer()
+                            Text("Full Effect (100%)")
+                                .font(.system(size: 11))
+                                .foregroundColor(ReminiDesign.secondaryText)
+                        }
+                    }
+                    .padding(.horizontal, ReminiDesign.space16)
+                    .padding(.top, ReminiDesign.space12)
+                    
+                    // Quick Tool Switcher
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 10) {
-                            ForEach(EnhancementMode.allCases) { mode in
+                        HStack(spacing: ReminiDesign.space8) {
+                            ForEach(EnhancementMode.allCases) { tool in
                                 Button(action: {
-                                    viewModel.reprocessWithMode(mode)
+                                    viewModel.selectModeAndReprocess(tool)
                                 }) {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: mode.iconName)
-                                            .font(.system(size: 12))
-                                        Text(mode.rawValue)
-                                            .font(.system(size: 12, weight: .semibold))
+                                    HStack(spacing: 5) {
+                                        Image(systemName: tool.iconName)
+                                            .font(.system(size: 11))
+                                        Text(tool.rawValue)
+                                            .font(.system(size: 12, weight: .medium))
                                     }
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 7)
                                     .background(
-                                        viewModel.selectedMode == mode
-                                        ? Color.blue
-                                        : Color.white.opacity(0.1)
+                                        viewModel.selectedMode == tool
+                                        ? ReminiDesign.primary
+                                        : ReminiDesign.secondarySurface
                                     )
-                                    .foregroundColor(.white)
+                                    .foregroundColor(
+                                        viewModel.selectedMode == tool
+                                        ? .white
+                                        : ReminiDesign.primary
+                                    )
                                     .clipShape(Capsule())
                                 }
                             }
                         }
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, ReminiDesign.space16)
                     }
-                    .padding(.top, 12)
                     
-                    // Main Save Button
+                    // Save Button
                     Button(action: {
                         viewModel.saveEnhancedImage()
                     }) {
                         HStack(spacing: 8) {
                             Image(systemName: "arrow.down.circle.fill")
-                                .font(.system(size: 18))
+                                .font(.system(size: 17))
                             Text("Save to Camera Roll")
-                                .font(.system(size: 16, weight: .bold))
                         }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(
-                            LinearGradient(
-                                colors: [Color.blue, Color.cyan],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .shadow(color: Color.blue.opacity(0.4), radius: 10, x: 0, y: 4)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 16)
+                    .buttonStyle(ReminiPrimaryButtonStyle())
+                    .padding(.horizontal, ReminiDesign.space16)
+                    .padding(.bottom, ReminiDesign.space12)
                 }
-                .background(Color(white: 0.08))
+                .background(ReminiDesign.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: ReminiDesign.corner24))
+                .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: -3)
             }
         }
         .sheet(isPresented: $showShareSheet) {
-            if let image = viewModel.enhancedImage {
+            if let image = viewModel.displayEnhancedImage {
                 ShareSheet(items: [image])
             }
         }
-        .alert("Saved!", isPresented: $viewModel.saveSuccessAlert) {
+        .alert("Saved Successfully", isPresented: $viewModel.saveSuccessAlert) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("Enhanced photo has been saved to your Photos app.")
+            Text("The enhanced photo (at \(Int(viewModel.strength * 100))% strength) has been saved to your iPhone Camera Roll and recorded in Activity.")
         }
     }
-}
-
-// Share sheet wrapper
-struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
     
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    /// For HD Upscale, resamples the original to match the 2× pixel dimensions so the Before/After comparison stays perfectly aligned!
+    private var comparisonBeforeImage: UIImage? {
+        guard let orig = viewModel.selectedImage else { return nil }
+        if viewModel.selectedMode == .hdUpscale, let after = viewModel.unblendedEnhancedImage {
+            return ImageEnhancerService.shared.resampleToTargetDimensions(image: orig, targetSize: after.size)
+        }
+        return orig
     }
-    
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }

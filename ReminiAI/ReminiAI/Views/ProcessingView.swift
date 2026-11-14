@@ -1,140 +1,136 @@
 import SwiftUI
 
+/// Processing Screen Overlay
+/// Clean light aesthetic with gentle scanning indicator and real-time status
 struct ProcessingView: View {
     @EnvironmentObject var viewModel: EnhanceViewModel
-    @State private var scanOffset: CGFloat = -180
-    @State private var pulseGlow: Bool = false
+    @State private var scanOffset: CGFloat = -160
     
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            ReminiDesign.background.ignoresSafeArea()
             
-            VStack(spacing: 28) {
+            VStack(spacing: ReminiDesign.space24) {
                 // Top Header
                 HStack {
                     Button(action: {
                         viewModel.isProcessing = false
                     }) {
                         Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(10)
-                            .background(Circle().fill(Color.white.opacity(0.12)))
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(ReminiDesign.primary)
+                            .frame(width: 36, height: 36)
+                            .background(ReminiDesign.secondarySurface)
+                            .clipShape(Circle())
                     }
+                    .accessibilityLabel("Cancel processing")
+                    
                     Spacer()
-                    Text("AI RESTORATION")
-                        .font(.system(size: 12, weight: .black, design: .monospaced))
-                        .tracking(2)
-                        .foregroundColor(.gray)
+                    
+                    Text("REMINI ENHANCER")
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .tracking(1.5)
+                        .foregroundColor(ReminiDesign.secondaryText)
+                    
                     Spacer()
-                    // Balance header
                     Spacer().frame(width: 36)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 16)
+                .padding(.horizontal, ReminiDesign.space24)
+                .padding(.top, ReminiDesign.space12)
                 
                 Spacer()
                 
-                // Photo Container with Scanning Laser Line
+                // Photo Preview with Gentle Scanning Line
                 ZStack {
                     if let image = viewModel.selectedImage {
                         Image(uiImage: image)
                             .resizable()
                             .scaledToFit()
-                            .frame(maxWidth: 320, maxHeight: 380)
-                            .clipShape(RoundedRectangle(cornerRadius: 22))
+                            .frame(maxWidth: 300, maxHeight: 360)
+                            .clipShape(RoundedRectangle(cornerRadius: ReminiDesign.corner24))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 22)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 2
-                                    )
+                                RoundedRectangle(cornerRadius: ReminiDesign.corner24)
+                                    .stroke(ReminiDesign.primary.opacity(0.2), lineWidth: 1.5)
                             )
-                            .shadow(color: Color.blue.opacity(pulseGlow ? 0.35 : 0.15), radius: 24, x: 0, y: 0)
-                            
-                        // Glowing Laser Scanning Bar
+                            .shadow(color: ReminiDesign.primary.opacity(0.08), radius: 16, x: 0, y: 6)
+                        
+                        // Gentle Precision Scanline
                         Rectangle()
                             .fill(
                                 LinearGradient(
                                     colors: [
                                         Color.clear,
-                                        Color.cyan.opacity(0.9),
+                                        ReminiDesign.primary.opacity(0.8),
                                         Color.white,
-                                        Color.cyan.opacity(0.9),
+                                        ReminiDesign.primary.opacity(0.8),
                                         Color.clear
                                     ],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
                             )
-                            .frame(width: 320, height: 3)
-                            .shadow(color: .cyan, radius: 8, x: 0, y: 0)
+                            .frame(width: 300, height: 2.5)
+                            .shadow(color: ReminiDesign.primary.opacity(0.5), radius: 6, x: 0, y: 0)
                             .offset(y: scanOffset)
                             .clipped()
                     }
                 }
-                .frame(height: 380)
+                .frame(height: 360)
                 
                 Spacer()
                 
-                // Processing Status & Progress Bar
-                VStack(spacing: 16) {
+                // Status & Progress Card
+                VStack(spacing: ReminiDesign.space12) {
                     HStack {
                         Text(viewModel.statusMessage)
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
+                            .font(.reminiBody)
+                            .foregroundColor(ReminiDesign.text)
                             .lineLimit(2)
                             .animation(.easeInOut, value: viewModel.statusMessage)
                         
                         Spacer()
                         
                         Text("\(Int(viewModel.progress * 100))%")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundColor(.cyan)
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(ReminiDesign.primary)
                     }
-                    .padding(.horizontal, 32)
                     
                     // Progress Bar
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             Capsule()
-                                .fill(Color.white.opacity(0.1))
-                                .frame(height: 8)
+                                .fill(ReminiDesign.secondarySurface)
+                                .frame(height: 6)
                             
                             Capsule()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.blue, Color.cyan, Color.purple],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .frame(width: geo.size.width * viewModel.progress, height: 8)
-                                .animation(.spring(response: 0.3, dampingFraction: 0.8), value: viewModel.progress)
+                                .fill(ReminiDesign.primary)
+                                .frame(width: geo.size.width * viewModel.progress, height: 6)
+                                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: viewModel.progress)
                         }
                     }
-                    .frame(height: 8)
-                    .padding(.horizontal, 32)
+                    .frame(height: 6)
                     
-                    Text("Powered by Apple Neural Engine & GPU")
-                        .font(.system(size: 11, weight: .regular))
-                        .foregroundColor(.gray.opacity(0.8))
+                    Text("Powered by \(viewModel.selectedEngine.rawValue)")
+                        .font(.reminiCaption)
+                        .foregroundColor(ReminiDesign.secondaryText)
                 }
-                .padding(.bottom, 36)
+                .padding(ReminiDesign.space16)
+                .background(ReminiDesign.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: ReminiDesign.corner16))
+                .overlay(
+                    RoundedRectangle(cornerRadius: ReminiDesign.corner16)
+                        .stroke(ReminiDesign.borderSubtle, lineWidth: 1)
+                )
+                .padding(.horizontal, ReminiDesign.space24)
+                .padding(.bottom, ReminiDesign.space32)
             }
         }
         .onAppear {
             withAnimation(
-                .easeInOut(duration: 1.8)
+                .easeInOut(duration: 1.6)
                 .repeatForever(autoreverses: true)
             ) {
-                scanOffset = 180
-                pulseGlow = true
+                scanOffset = 160
             }
         }
     }

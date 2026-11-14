@@ -6,9 +6,9 @@ struct ReminiAIApp: App {
     
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            MainTabView()
                 .environmentObject(viewModel)
-                .preferredColorScheme(.dark)
+                .preferredColorScheme(.light) // Premium Light Theme
         }
     }
 }
