@@ -25,17 +25,26 @@ enum BlurPreset: String, CaseIterable, Identifiable, Codable {
         case .off: return "No depth blur applied"
         case .soft: return "Subtle separation (~f/4.0)"
         case .portrait: return "Classic portrait bokeh (~f/2.8)"
-        case .strong: return "Creamy background defocus (~f/1.4)"
+        case .strong: return "Defocused background blur (~f/1.4)"
         }
     }
 }
 
 /// Represents a detected human instance for selective crowd/background removal
-struct DetectedPerson: Identifiable, Equatable {
-    let id: UUID
-    let boundingBox: CGRect // Normalized (0...1) in UIKit coordinates
+struct DetectedPerson: Identifiable, Equatable, Hashable {
+    let id: String
+    let boundingBox: CGRect // Normalized (0...1) in UIKit coordinates (top-left origin)
     let isPrimarySubject: Bool
     var isSelectedForRemoval: Bool = false
+    
+    /// Stable deterministic identifier based on normalized bounding box coordinates
+    static func makeStableId(sessionId: UUID, box: CGRect) -> String {
+        let ix = Int(box.origin.x * 1000)
+        let iy = Int(box.origin.y * 1000)
+        let iw = Int(box.width * 1000)
+        let ih = Int(box.height * 1000)
+        return "person_\(sessionId.uuidString.prefix(6))_\(ix)_\(iy)_\(iw)_\(ih)"
+    }
 }
 
 /// Independent enhancement controls that can be combined or toggled individually
@@ -55,8 +64,8 @@ struct CombinedEffects: Equatable {
     /// Selective background people removal
     var removeBackgroundPeople: Bool = false
     
-    /// IDs of detected people chosen for removal
-    var selectedPeopleIds: Set<UUID> = []
+    /// Stable IDs of detected people chosen for removal
+    var selectedPeopleIds: Set<String> = []
     
     /// Default configuration: Natural Enhance defaults
     static let defaults = CombinedEffects(

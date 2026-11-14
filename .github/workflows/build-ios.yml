@@ -42,6 +42,9 @@ jobs:
           INFO_PLIST=$(find ReminiAI -name "Info.plist" | head -n 1)
           cp "$INFO_PLIST" Payload/ReminiAI.app/Info.plist
           
+          # Ensure bundle ID is strictly com.saiganesh.reminiai without unexpanded Xcode variables
+          sed -i '' 's/\$(PRODUCT_BUNDLE_IDENTIFIER)/com.saiganesh.reminiai/g' Payload/ReminiAI.app/Info.plist || true
+          
           zip -r ReminiAI.ipa Payload
           echo "Unsigned IPA packaged successfully!"
 
@@ -50,3 +53,9 @@ jobs:
         with:
           name: ReminiAI-iPhone13-IPA
           path: ReminiAI.ipa
+
+      - name: Upload Web Editor Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ReminiAI-Web-Editor
+          path: web/

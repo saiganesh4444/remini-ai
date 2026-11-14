@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>Remini AI — Mobile & Desktop Web Photo Editor</title>
+  <meta name="description" content="ReminiAI brings natural portrait enhancement, HD upscaling, portrait depth blur, and background people removal to iOS, Android, and Desktop.">
+  <meta name="theme-color" content="#173D35">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header" role="banner">
+      <div class="header-content">
+        <div class="brand">
+          <svg class="aperture-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="14.31" y1="8" x2="20.05" y2="17.94"></line>
+            <line x1="9.69" y1="8" x2="21.17" y2="8"></line>
+            <line x1="7.38" y1="12" x2="13.12" y2="2.06"></line>
+            <line x1="9.69" y1="16" x2="3.95" y2="6.06"></line>
+            <line x1="14.31" y1="16" x2="2.83" y2="16"></line>
+            <line x1="16.62" y1="12" x2="10.88" y2="21.94"></line>
+          </svg>
+          <span class="wordmark">Remini<strong>AI</strong></span>
+        </div>
+        <div class="header-actions">
+          <button id="btn-share" class="icon-button" aria-label="Share Enhanced Image" title="Share Photo">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+              <polyline points="16 6 12 2 8 6"></polyline>
+              <line x1="12" y1="2" x2="12" y2="15"></line>
+            </svg>
+          </button>
+          <button id="btn-download" class="icon-button" aria-label="Download Full Resolution" title="Download Image">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="editor-main" role="main">
+      <!-- Left Column: Zoomable Comparison Stage -->
+      <section class="stage-section" aria-label="Photo Preview Stage">
+        <div class="stage-wrapper" id="stage-wrapper">
+          <!-- Dropzone & Empty State -->
+          <div class="empty-state" id="empty-state">
+            <input type="file" id="file-input" accept="image/*" class="sr-only" aria-label="Upload Photo">
+            <div class="upload-card" id="drop-zone" tabindex="0" role="button" aria-label="Choose photo or drop image here">
+              <div class="upload-icon-circle">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+              </div>
+              <h2 class="upload-title">Choose Photo to Enhance</h2>
+              <p class="upload-subtitle">Drag and drop any portrait, or click to browse (JPEG, PNG, HEIC, WebP)</p>
+              <span class="btn-choose">Choose from Device</span>
+            </div>
+          </div>
+
+          <!-- Active Comparison Viewport -->
+          <div class="comparison-container hidden" id="comparison-container">
+            <canvas id="canvas-stage" class="stage-canvas" aria-label="Interactive before and after comparison"></canvas>
+
+            <!-- Badges -->
+            <div class="badge badge-before" id="badge-before" aria-hidden="true">BEFORE</div>
+            <div class="badge badge-after" id="badge-after" aria-hidden="true">AFTER</div>
+
+            <!-- Draggable Divider Handle -->
+            <div class="divider-line" id="divider-line" aria-hidden="true">
+              <div class="divider-handle" id="divider-handle" role="slider" aria-label="Before and after split slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" tabindex="0">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Zoom Controls Overlay -->
+            <div class="zoom-controls-overlay" role="group" aria-label="Zoom controls">
+              <button id="btn-zoom-out" class="zoom-btn" aria-label="Zoom out">−</button>
+              <button id="btn-zoom-reset" class="zoom-pill" aria-label="Reset zoom and pan" title="Double click to reset">1.0×</button>
+              <button id="btn-zoom-in" class="zoom-btn" aria-label="Zoom in">+</button>
+            </div>
+          </div>
+
+          <!-- Loading Spinner -->
+          <div class="processing-overlay hidden" id="processing-overlay" role="status" aria-live="polite">
+            <div class="spinner"></div>
+            <p id="processing-text" class="processing-status">Enhancing portrait...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Controls & Effects Panel -->
+      <aside class="controls-panel" aria-label="Enhancement Controls">
+        <!-- Photo Actions -->
+        <div class="panel-section photo-meta-section">
+          <div class="photo-meta">
+            <span id="photo-filename" class="photo-name">portrait.jpg</span>
+            <span id="photo-dimensions" class="photo-dims">1080 × 1440</span>
+          </div>
+          <button id="btn-change-photo" class="text-button">Change Photo</button>
+        </div>
+
+        <!-- Tool Selection Grid -->
+        <div class="panel-section">
+          <label class="section-label">Select Tool</label>
+          <div class="tools-grid" role="radiogroup" aria-label="Enhancement Tools">
+            <button class="tool-btn active" data-mode="naturalEnhance" role="radio" aria-checked="true">
+              <span class="tool-icon">✨</span>
+              <span class="tool-name">Natural Enhance</span>
+            </button>
+            <button class="tool-btn" data-mode="hdUpscale" role="radio" aria-checked="false">
+              <span class="tool-icon">🔍</span>
+              <span class="tool-name">HD Upscale (2×)</span>
+            </button>
+            <button class="tool-btn" data-mode="softSharpen" role="radio" aria-checked="false">
+              <span class="tool-icon">📐</span>
+              <span class="tool-name">Soft Sharpen</span>
+            </button>
+            <button class="tool-btn" data-mode="vintageTone" role="radio" aria-checked="false">
+              <span class="tool-icon">🎞️</span>
+              <span class="tool-name">Vintage Tone</span>
+            </button>
+            <button class="tool-btn" data-mode="portraitBlur" role="radio" aria-checked="false">
+              <span class="tool-icon">🌸</span>
+              <span class="tool-name">Portrait Blur</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Strength Slider -->
+        <div class="panel-section">
+          <div class="slider-header">
+            <label for="strength-slider" class="section-label">Effect Strength</label>
+            <span id="strength-value" class="strength-pill">100%</span>
+          </div>
+          <input type="range" id="strength-slider" min="0" max="100" value="100" class="remini-slider" aria-label="Effect strength">
+        </div>
+
+        <!-- Independent Combined Effects Modal Trigger -->
+        <div class="panel-section">
+          <button id="btn-open-effects" class="btn-secondary">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="4" y1="21" x2="4" y2="14"></line>
+              <line x1="4" y1="10" x2="4" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12" y2="3"></line>
+              <line x1="20" y1="21" x2="20" y2="16"></line>
+              <line x1="20" y1="12" x2="20" y2="3"></line>
+              <line x1="1" y1="14" x2="7" y2="14"></line>
+              <line x1="9" y1="8" x2="15" y2="8"></line>
+              <line x1="17" y1="16" x2="23" y2="16"></line>
+            </svg>
+            <span>Edit Combined Effects (<span id="active-effects-count">2</span> active)</span>
+          </button>
+        </div>
+
+        <!-- Save / Export Section -->
+        <div class="panel-section export-section">
+          <button id="btn-save-main" class="btn-primary">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Save Enhanced Photo</span>
+          </button>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Combined Effects & Inpainting Modal Dialog -->
+    <div class="modal-backdrop hidden" id="effects-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 id="modal-title" class="modal-heading">Combined Effects & Cleanup</h2>
+          <button id="btn-close-modal" class="modal-close" aria-label="Close dialog">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Portrait & Face Section -->
+          <div class="effects-group">
+            <h3 class="effects-group-title">PORTRAIT & FACE</h3>
+            <div class="toggle-row">
+              <div class="toggle-label-wrap">
+                <span class="toggle-title">Face Enhancement</span>
+                <span class="toggle-desc">Mild, face-local detail refinement for eyes, lashes, and hair</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggle-face-enhancement" checked>
+                <span class="slider-switch"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label-wrap">
+                <span class="toggle-title">Face Retouch</span>
+                <span class="toggle-desc">Gentle smoothing preserving freckles, moles, and skin texture</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggle-face-retouch">
+                <span class="slider-switch"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Background Section -->
+          <div class="effects-group">
+            <h3 class="effects-group-title">BACKGROUND ADJUSTMENTS</h3>
+            <div class="toggle-row">
+              <div class="toggle-label-wrap">
+                <span class="toggle-title">Background Enhancement</span>
+                <span class="toggle-desc">Mild denoising & clarity outside protected subjects</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggle-bg-enhancement" checked>
+                <span class="slider-switch"></span>
+              </label>
+            </div>
+
+            <div class="preset-row">
+              <span class="toggle-title">Background Depth Blur</span>
+              <div class="segmented-control" role="radiogroup" aria-label="Blur Preset">
+                <button class="seg-btn active" data-preset="off">Off</button>
+                <button class="seg-btn" data-preset="soft">Soft</button>
+                <button class="seg-btn" data-preset="portrait">Portrait</button>
+                <button class="seg-btn" data-preset="strong">Strong</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selective Removal & Inpainting Section -->
+          <div class="effects-group">
+            <h3 class="effects-group-title">OBJECT & PEOPLE CLEANUP</h3>
+            <div class="toggle-row">
+              <div class="toggle-label-wrap">
+                <span class="toggle-title">Remove Background People</span>
+                <span class="toggle-desc">Erase bystanders & reconstruct scene (bricks, walls, background)</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggle-remove-people">
+                <span class="slider-switch"></span>
+              </label>
+            </div>
+
+            <div id="inpainting-controls" class="inpainting-tray hidden">
+              <p class="tray-note">Paint over photobombers or shadows using the brush on canvas.</p>
+              <div class="brush-controls">
+                <button id="btn-brush-mode" class="tray-btn active">Paint Mask</button>
+                <button id="btn-eraser-mode" class="tray-btn">Eraser</button>
+                <button id="btn-clear-mask" class="tray-btn danger">Clear Mask</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="btn-reset-effects" class="btn-text danger">Reset to Defaults</button>
+          <div class="modal-footer-actions">
+            <button id="btn-cancel-effects" class="btn-secondary">Cancel</button>
+            <button id="btn-apply-effects" class="btn-primary">Apply Adjustments</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

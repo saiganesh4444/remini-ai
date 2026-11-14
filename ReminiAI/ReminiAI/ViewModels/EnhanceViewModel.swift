@@ -172,7 +172,8 @@ final class EnhanceViewModel: ObservableObject {
                 if selectedMode == .naturalEnhance || selectedMode == .portraitBlur {
                     result = try await enhancerService.executeCombinedEffects(
                         original: inputImage,
-                        effects: activeCombinedEffects
+                        effects: activeCombinedEffects,
+                        sessionId: newJobId
                     ) { [weak self] prog, msg in
                         Task { @MainActor in
                             guard self?.currentJobId == newJobId else { return }
@@ -184,7 +185,8 @@ final class EnhanceViewModel: ObservableObject {
                     // On-device single mode
                     result = try await enhancerService.enhanceLocally(
                         image: inputImage,
-                        mode: selectedMode
+                        mode: selectedMode,
+                        sessionId: newJobId
                     ) { [weak self] prog, msg in
                         Task { @MainActor in
                             guard self?.currentJobId == newJobId else { return }

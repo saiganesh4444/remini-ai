@@ -205,12 +205,16 @@ struct ComparisonView: View {
         }
     }
     
-    /// For HD Upscale, resamples the original to match the 2× pixel dimensions so the Before/After comparison stays perfectly aligned!
+    /// Canonicalizes the original to upright physical pixels and aligns dimensions with enhanced output
     private var comparisonBeforeImage: UIImage? {
         guard let orig = viewModel.selectedImage else { return nil }
-        if viewModel.selectedMode == .hdUpscale, let after = viewModel.unblendedEnhancedImage {
-            return ImageEnhancerService.shared.resampleToTargetDimensions(image: orig, targetSize: after.size)
+        let uprightOrig = ImageEnhancerService.shared.canonicalizeToUprightPixels(orig)
+        if let after = viewModel.unblendedEnhancedImage {
+            let uprightAfter = ImageEnhancerService.shared.canonicalizeToUprightPixels(after)
+            if uprightOrig.size != uprightAfter.size {
+                return ImageEnhancerService.shared.resampleToTargetDimensions(image: uprightOrig, targetSize: uprightAfter.size)
+            }
         }
-        return orig
+        return uprightOrig
     }
 }

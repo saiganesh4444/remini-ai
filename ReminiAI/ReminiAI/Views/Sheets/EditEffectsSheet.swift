@@ -92,7 +92,7 @@ struct EditEffectsSheet: View {
                             
                             Text(draftEffects.selectedPeopleIds.isEmpty
                                  ? "Tap below to select photo photobombers or bystanders"
-                                 : "\(draftEffects.selectedPeopleIds.count) person(s) marked for removal")
+                                 : "\(draftEffects.selectedPeopleIds.count) person(s) marked for inpainting")
                                 .font(.reminiCaption)
                                 .foregroundColor(draftEffects.selectedPeopleIds.isEmpty ? ReminiDesign.secondaryText : ReminiDesign.primary)
                         }
@@ -102,7 +102,10 @@ struct EditEffectsSheet: View {
                     Button(action: {
                         Task {
                             if let img = viewModel.selectedImage {
-                                availablePeople = await ImageEnhancerService.shared.getDetectedPeople(for: img)
+                                availablePeople = await ImageEnhancerService.shared.getDetectedPeople(
+                                    for: img,
+                                    sessionId: viewModel.currentPhotoSessionId
+                                )
                                 showingPeoplePicker = true
                             }
                         }
@@ -123,7 +126,7 @@ struct EditEffectsSheet: View {
                         .font(.system(size: 11, weight: .bold))
                         .foregroundColor(ReminiDesign.secondaryText)
                 } footer: {
-                    Text("On-device inpainting seamlessly reconstructs the background while keeping your primary subject protected.")
+                    Text("On-device inpainting seamlessly reconstructs the background scenery while keeping your primary subject protected.")
                         .font(.reminiCaption)
                         .foregroundColor(ReminiDesign.secondaryText)
                 }
@@ -170,6 +173,7 @@ struct EditEffectsSheet: View {
                 if let img = viewModel.selectedImage {
                     PeopleSelectionSheet(
                         image: img,
+                        sessionId: viewModel.currentPhotoSessionId,
                         detectedPeople: $availablePeople,
                         selectedPeopleIds: $draftEffects.selectedPeopleIds
                     ) { updatedSelection in
