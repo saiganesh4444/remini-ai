@@ -160,7 +160,7 @@ final class ImageEnhancerService {
         
         // Blend back unblurred image around center/faces
         let radialMask = CIFilter.radialGradient()
-        let center = CIVector(x: image.extent.midX, y: image.extent.midY)
+        let center = CGPoint(x: image.extent.midX, y: image.extent.midY)
         radialMask.center = center
         radialMask.radius0 = Float(min(image.extent.width, image.extent.height) * 0.25)
         radialMask.radius1 = Float(min(image.extent.width, image.extent.height) * 0.55)
