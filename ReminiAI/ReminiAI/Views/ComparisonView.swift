@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Before / After Result Screen with Interactive Strength Slider
+/// Enhanced Result Screen with Zoomable Before/After Comparison & Combined Effects Editor
 struct ComparisonView: View {
     @EnvironmentObject var viewModel: EnhanceViewModel
     @State private var showShareSheet: Bool = false
@@ -10,7 +10,7 @@ struct ComparisonView: View {
             ReminiDesign.background.ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Top Navigation Bar
+                // MARK: - Top Navigation Bar
                 HStack {
                     Button(action: {
                         viewModel.showComparisonView = false
@@ -38,7 +38,7 @@ struct ComparisonView: View {
                     
                     Spacer()
                     
-                    if let imageToShare = viewModel.displayEnhancedImage {
+                    if let _ = viewModel.displayEnhancedImage {
                         Button(action: {
                             showShareSheet = true
                         }) {
@@ -56,34 +56,65 @@ struct ComparisonView: View {
                 }
                 .padding(.horizontal, ReminiDesign.space16)
                 .padding(.top, ReminiDesign.space8)
-                .padding(.bottom, ReminiDesign.space12)
+                .padding(.bottom, ReminiDesign.space8)
                 
-                // Interactive Before / After Slider
+                // MARK: - Zoomable & Pannable Before / After Slider
                 if let before = comparisonBeforeImage, let after = viewModel.displayEnhancedImage {
-                    BeforeAfterSlider(beforeImage: before, afterImage: after)
-                        .clipShape(RoundedRectangle(cornerRadius: ReminiDesign.corner24))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: ReminiDesign.corner24)
-                                .stroke(ReminiDesign.borderSubtle, lineWidth: 1)
-                        )
-                        .shadow(
-                            color: ReminiDesign.featuredCardShadowColor,
-                            radius: ReminiDesign.featuredCardShadowRadius,
-                            x: 0,
-                            y: ReminiDesign.featuredCardShadowY
-                        )
-                        .padding(.horizontal, ReminiDesign.space16)
+                    BeforeAfterSlider(
+                        beforeImage: before,
+                        afterImage: after,
+                        photoId: viewModel.currentPhotoSessionId
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: ReminiDesign.corner24))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: ReminiDesign.corner24)
+                            .stroke(ReminiDesign.borderSubtle, lineWidth: 1)
+                    )
+                    .shadow(
+                        color: ReminiDesign.featuredCardShadowColor,
+                        radius: ReminiDesign.featuredCardShadowRadius,
+                        x: 0,
+                        y: ReminiDesign.featuredCardShadowY
+                    )
+                    .padding(.horizontal, ReminiDesign.space16)
                 } else {
                     Spacer()
                     ProgressView()
                     Spacer()
                 }
                 
-                // Bottom Controls & Tuning Panel
-                VStack(spacing: ReminiDesign.space16) {
+                // MARK: - Bottom Controls Panel
+                VStack(spacing: ReminiDesign.space12) {
                     
-                    // MARK: - Enhancement Strength Slider
-                    VStack(alignment: .leading, spacing: 6) {
+                    // Quick Action: Edit Effects Button
+                    HStack {
+                        Button(action: {
+                            viewModel.showEditEffectsSheet = true
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "slider.horizontal.3")
+                                    .font(.system(size: 13, weight: .semibold))
+                                Text("Edit effects (\(viewModel.activeCombinedEffects.activeCount) active)")
+                                    .font(.system(size: 13, weight: .semibold))
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(ReminiDesign.secondarySurface)
+                            .foregroundColor(ReminiDesign.primary)
+                            .clipShape(Capsule())
+                        }
+                        
+                        Spacer()
+                        
+                        Text("Pinch to zoom • Double tap reset")
+                            .font(.system(size: 11))
+                            .foregroundColor(ReminiDesign.secondaryText)
+                    }
+                    .padding(.horizontal, ReminiDesign.space16)
+                    .padding(.top, ReminiDesign.space8)
+                    
+                    // MARK: - Independent Strength Slider (0% ... 100%)
+                    VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Text("Strength")
                                 .font(.system(size: 14, weight: .semibold))
@@ -95,7 +126,7 @@ struct ComparisonView: View {
                                 .font(.reminiBadge)
                                 .foregroundColor(ReminiDesign.primary)
                                 .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
+                                .padding(.vertical, 2)
                                 .background(ReminiDesign.secondarySurface)
                                 .clipShape(Capsule())
                         }
@@ -104,19 +135,8 @@ struct ComparisonView: View {
                             .tint(ReminiDesign.primary)
                             .accessibilityLabel("Enhancement strength slider")
                             .accessibilityValue("\(Int(viewModel.strength * 100)) percent")
-                        
-                        HStack {
-                            Text("Original (0%)")
-                                .font(.system(size: 11))
-                                .foregroundColor(ReminiDesign.secondaryText)
-                            Spacer()
-                            Text("Full Effect (100%)")
-                                .font(.system(size: 11))
-                                .foregroundColor(ReminiDesign.secondaryText)
-                        }
                     }
                     .padding(.horizontal, ReminiDesign.space16)
-                    .padding(.top, ReminiDesign.space12)
                     
                     // Quick Tool Switcher
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -132,7 +152,7 @@ struct ComparisonView: View {
                                             .font(.system(size: 12, weight: .medium))
                                     }
                                     .padding(.horizontal, 12)
-                                    .padding(.vertical, 7)
+                                    .padding(.vertical, 6)
                                     .background(
                                         viewModel.selectedMode == tool
                                         ? ReminiDesign.primary
@@ -173,6 +193,10 @@ struct ComparisonView: View {
             if let image = viewModel.displayEnhancedImage {
                 ShareSheet(items: [image])
             }
+        }
+        .sheet(isPresented: $viewModel.showEditEffectsSheet) {
+            EditEffectsSheet()
+                .environmentObject(viewModel)
         }
         .alert("Saved Successfully", isPresented: $viewModel.saveSuccessAlert) {
             Button("OK", role: .cancel) {}

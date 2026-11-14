@@ -35,6 +35,10 @@ final class EnhanceViewModel: ObservableObject {
     @Published var selectedMode: EnhancementMode = .naturalEnhance
     @Published var selectedEngine: EngineType = .onDevice
     
+    // MARK: - Combined Effects Configuration
+    @Published var activeCombinedEffects: CombinedEffects = .defaults
+    @Published var showEditEffectsSheet: Bool = false
+    
     // MARK: - Strength Slider (0.0 → 1.0)
     @Published var strength: Float = 1.0 {
         didSet {
@@ -48,6 +52,9 @@ final class EnhanceViewModel: ObservableObject {
     @Published var progress: Double = 0.0
     @Published var statusMessage: String = ""
     @Published var currentJobId: UUID?
+    
+    // Unique ID for current photo comparison session (resets zoom/slider on change)
+    @Published var currentPhotoSessionId: UUID = UUID()
     
     // MARK: - Search State
     @Published var searchQuery: String = ""
@@ -136,6 +143,8 @@ final class EnhanceViewModel: ObservableObject {
         self.unblendedEnhancedImage = nil
         self.displayEnhancedImage = nil
         self.strength = 1.0
+        self.activeCombinedEffects = .defaults
+        self.currentPhotoSessionId = UUID()
         startEnhancement()
     }
     
@@ -143,7 +152,6 @@ final class EnhanceViewModel: ObservableObject {
     func startEnhancement() {
         guard let inputImage = selectedImage else { return }
         
-        // Generate new job ID; prevents race conditions from late previous jobs
         let newJobId = UUID()
         self.currentJobId = newJobId
         
@@ -159,7 +167,21 @@ final class EnhanceViewModel: ObservableObject {
         Task {
             do {
                 let result: UIImage
-                if selectedEngine == .onDevice || !selectedMode.isSupportedOnCloud {
+                
+                // If Natural Enhance or Portrait Blur, execute via Combined Effects engine
+                if selectedMode == .naturalEnhance || selectedMode == .portraitBlur {
+                    result = try await enhancerService.executeCombinedEffects(
+                        original: inputImage,
+                        effects: activeCombinedEffects
+                    ) { [weak self] prog, msg in
+                        Task { @MainActor in
+                            guard self?.currentJobId == newJobId else { return }
+                            self?.progress = prog
+                            self?.statusMessage = msg
+                        }
+                    }
+                } else if selectedEngine == .onDevice || !selectedMode.isSupportedOnCloud {
+                    // On-device single mode
                     result = try await enhancerService.enhanceLocally(
                         image: inputImage,
                         mode: selectedMode
@@ -171,6 +193,7 @@ final class EnhanceViewModel: ObservableObject {
                         }
                     }
                 } else {
+                    // Cloud AI
                     result = try await cloudService.enhanceViaCloud(
                         image: inputImage,
                         mode: selectedMode,
@@ -211,9 +234,20 @@ final class EnhanceViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Combined Effects Application
+    func applyCombinedEffects(_ effects: CombinedEffects) {
+        self.activeCombinedEffects = effects
+        startEnhancement()
+    }
+    
     // MARK: - Mode Switching
     func selectModeAndReprocess(_ mode: EnhancementMode) {
         self.selectedMode = mode
+        if mode == .naturalEnhance {
+            self.activeCombinedEffects.backgroundBlur = .off
+        } else if mode == .portraitBlur {
+            self.activeCombinedEffects.backgroundBlur = .portrait
+        }
         if selectedImage != nil {
             startEnhancement()
         }
@@ -249,7 +283,6 @@ final class EnhanceViewModel: ObservableObject {
             do {
                 try await photoManager.saveImageToPhotos(output)
                 
-                // Record in activity history
                 let item = historyManager.recordActivity(
                     image: output,
                     mode: selectedMode,
